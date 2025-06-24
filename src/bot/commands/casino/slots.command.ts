@@ -37,7 +37,6 @@ const slotItems = [
   '12.png',
   '13.png',
   '14.png',
-  '15.png',
 ];
 
 @Command('slots')
