@@ -54,7 +54,7 @@ export class ChecktransactionCommand extends CommandMessage {
         where: { user_id: process.env.UTILITY_BOT_ID },
       });
       await messageChannel?.reply({
-        t: `Tổng tiền user: ${totalAmount - (findBot?.amount ?? 0)}, Tiền POT: ${findBot?.jackPot ?? 0}, , Tiền user + pot: ${totalAmount - (findBot?.amount ?? 0) + (findBot?.jackPot ?? 0)} \n , Tiền bot: ${findBot?.amount ?? ''}`,
+        t: `Tổng tiền user: ${totalAmount - (findBot?.amount ?? 0)}, Tiền POT: ${findBot?.jackPot ?? 0}, , Tiền user + pot: ${+(+totalAmount - (findBot?.amount ?? 0)) + (findBot?.jackPot ?? 0)} \n , Tiền bot: ${findBot?.amount ?? ''}`,
       });
       return;
     }
