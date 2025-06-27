@@ -10,6 +10,7 @@ import { SicboService } from './sicbo.service';
 import { FuncType } from 'src/bot/constants/configs';
 import { EUserError } from 'src/bot/constants/error';
 import { User } from 'src/bot/models/user.entity';
+import { UserCacheService } from 'src/bot/services/user-cache.service';
 
 @Command('sicbo')
 export class SicboCommand extends CommandMessage {
@@ -20,12 +21,12 @@ export class SicboCommand extends CommandMessage {
     private userRepository: Repository<User>,
     clientService: MezonClientService,
     private sicboService: SicboService,
+    private userCacheService: UserCacheService,
   ) {
     super(clientService);
   }
 
-
-  async execute(args: string[], message: ChannelMessage) {
+  async execute111(args: string[], message: ChannelMessage) {
     const messageChannel = await this.getChannelMessage(message);
     const msgText = `❌ Command sicbo hiện đang bảo trì!`;
     return await messageChannel?.reply({
@@ -40,12 +41,16 @@ export class SicboCommand extends CommandMessage {
     });
   }
 
-
-  async execute333(args: string[], message: ChannelMessage) {
+  async execute(args: string[], message: ChannelMessage) {
     const messageChannel = await this.getChannelMessage(message);
-    const findUser = await this.userRepository.findOne({
-      where: { user_id: message.sender_id },
-    });
+    const findUser = await this.userCacheService.getUserFromCache(
+      message.sender_id,
+    );
+    const banStatus = await this.userCacheService.getUserBanStatus(
+      message.sender_id,
+      FuncType.SICBO,
+    );
+
     if (!findUser) {
       return await messageChannel?.reply({
         t: EUserError.INVALID_USER,
@@ -58,21 +63,14 @@ export class SicboCommand extends CommandMessage {
         ],
       });
     }
-    const activeBan = Array.isArray(findUser.ban)
-      ? findUser.ban.find(
-          (ban) =>
-            (ban.type === FuncType.SICBO || ban.type === FuncType.ALL) &&
-            ban.unBanTime > Math.floor(Date.now() / 1000),
-        )
-      : null;
 
-    if (activeBan) {
-      const unbanDate = new Date(activeBan.unBanTime * 1000);
+    if (banStatus.isBanned) {
+      const unbanDate = new Date(banStatus.banInfo.unBanTime * 1000);
       const formattedTime = unbanDate.toLocaleString('vi-VN', {
         timeZone: 'Asia/Ho_Chi_Minh',
         hour12: false,
       });
-      const content = activeBan.note;
+      const content = banStatus.banInfo.unBanTime;
       const msgText = `❌ Bạn đang bị cấm thực hiện hành động "sicbo" đến ${formattedTime}\n   - Lý do: ${content}\n NOTE: Hãy liên hệ admin để mua vé unban`;
       return await messageChannel?.reply({
         t: msgText,

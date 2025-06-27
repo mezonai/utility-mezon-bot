@@ -9,6 +9,7 @@ import { MezonClientService } from 'src/mezon/services/mezon-client.service';
 import { Repository } from 'typeorm';
 import { SicboService } from './sicbo.service';
 import { getRandomColor } from 'src/bot/utils/helps';
+import { UserCacheService } from 'src/bot/services/user-cache.service';
 
 @Injectable()
 export class SicboSchedulerService {
@@ -20,6 +21,7 @@ export class SicboSchedulerService {
     @InjectRepository(User) private userRepository: Repository<User>,
     private clientService: MezonClientService,
     private sicboService: SicboService,
+    private userCacheService: UserCacheService,
   ) {
     this.client = this.clientService.getClient();
     this.startCronJobs();
@@ -120,14 +122,14 @@ export class SicboSchedulerService {
         { result: reward },
       );
       if (reward > 0) {
-        const findUser = await this.userRepository.findOne({
-          where: { user_id: user.userId },
-        });
+        const findUser = await this.userCacheService.getUserFromCache(
+          user.userId,
+        );
 
         if (findUser) {
-          findUser.amount = Number(findUser.amount || 0) + reward;
-
-          await this.userRepository.save(findUser);
+          await this.userCacheService.updateUserCache(user.userId, {
+            amount: Number(findUser.amount || 0) + reward,
+          });
         }
       }
     }
