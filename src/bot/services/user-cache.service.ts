@@ -203,17 +203,17 @@ export class UserCacheService {
     }
   }
 
-  async getUserFromCache(userId: string, isSlots?: boolean): Promise<UserCache | null> {
+  async getUserFromCache(userId: string): Promise<UserCache | null> {
     try {
       const memoryCache = this.userCache.get(userId);
-      if (memoryCache && isSlots) {
+      if (memoryCache) {
         memoryCache.lastUpdated = Date.now();
         return memoryCache;
       }
 
       let redisCache = await this.redisCacheService.getUserCache(userId);
 
-      if (redisCache && isSlots) {
+      if (redisCache) {
         redisCache.lastUpdated = Date.now();
         this.userCache.set(userId, redisCache);
         return redisCache;

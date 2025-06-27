@@ -96,7 +96,7 @@ export class SlotsCommand extends CommandMessage {
       throw new Error('UTILITY_BOT_ID is not defined');
     }
 
-    const botCache = await this.userCacheService.getUserFromCache(botId, true);
+    const botCache = await this.userCacheService.getUserFromCache(botId);
     if (!botCache) {
       const newBotCache = await this.userCacheService.createUserIfNotExists(
         botId,
@@ -504,7 +504,6 @@ export class SlotsCommand extends CommandMessage {
     try {
       const findUser = await this.userCacheService.getUserFromCache(
         message.sender_id,
-        true,
       );
 
       if (!findUser) {
