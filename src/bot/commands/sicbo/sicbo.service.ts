@@ -272,21 +272,16 @@ export class SicboService {
         const components = this.generateButtonComponents(dataMsg);
         return await messsage.update({ embed: resultEmbed, components });
       }
-      const findUser = await this.userRepository.findOne({
-        where: { user_id: data.user_id },
-      });
+      const findUser = await this.userCacheService.getUserFromCache(
+        data.user_id,
+      );
       if (!findUser) return;
-      const activeBan = Array.isArray(findUser.ban)
-        ? findUser.ban.find(
-            (ban) =>
-              (ban.type === FuncType.SICBO || ban.type === FuncType.ALL) &&
-              ban.unBanTime > Math.floor(Date.now() / 1000),
-          )
-        : null;
+      const banStatus = await this.userCacheService.getUserBanStatus(
+        data.user_id,
+        FuncType.SICBO,
+      );
 
-      if (activeBan) {
-        return;
-      }
+      if (banStatus.isBanned) return;
 
       if (typeButtonRes === EmbebButtonType.BET5000) {
         const money = 5000;
@@ -304,8 +299,9 @@ export class SicboService {
         if (betValue !== 1 && betValue !== 2) {
           return;
         }
-        findUser.amount = findUser.amount - money;
-        await this.userRepository.save(findUser);
+        await this.userCacheService.updateUserCache(data.user_id, {
+          amount: (findUser.amount || 0) - money,
+        });
         if (!findUserSicbo) {
           const dataSicbo = {
             userId: data.user_id.toString(),
@@ -366,8 +362,9 @@ export class SicboService {
         if (betValue !== 1 && betValue !== 2) {
           return;
         }
-        findUser.amount = findUser.amount - money;
-        await this.userRepository.save(findUser);
+        await this.userCacheService.updateUserCache(data.user_id, {
+          amount: (findUser.amount || 0) - money,
+        });
         if (!findUserSicbo) {
           const dataSicbo = {
             userId: data.user_id.toString(),
@@ -428,8 +425,9 @@ export class SicboService {
         if (betValue !== 1 && betValue !== 2) {
           return;
         }
-        findUser.amount = findUser.amount - money;
-        await this.userRepository.save(findUser);
+        await this.userCacheService.updateUserCache(data.user_id, {
+          amount: (findUser.amount || 0) - money,
+        });
         if (!findUserSicbo) {
           const dataSicbo = {
             userId: data.user_id.toString(),
@@ -490,8 +488,9 @@ export class SicboService {
         if (betValue !== 1 && betValue !== 2) {
           return;
         }
-        findUser.amount = findUser.amount - money;
-        await this.userRepository.save(findUser);
+        await this.userCacheService.updateUserCache(data.user_id, {
+          amount: (findUser.amount || 0) - money,
+        });
         if (!findUserSicbo) {
           const dataSicbo = {
             userId: data.user_id.toString(),
