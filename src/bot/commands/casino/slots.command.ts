@@ -22,7 +22,6 @@ import { UserCacheService } from 'src/bot/services/user-cache.service';
 import { ReplyStatsService } from 'src/bot/services/reply-stats.service';
 
 const slotItems = [
-  '0.png',
   '1.png',
   '2.png',
   '3.png',
@@ -37,6 +36,7 @@ const slotItems = [
   '12.png',
   '13.png',
   '14.png',
+  '15.png',
 ];
 
 @Command('slots')
@@ -657,9 +657,9 @@ export class SlotsCommand extends CommandMessage {
               type: EMessageComponentType.ANIMATION,
               component: {
                 url_image:
-                  'https://cdn.mezon.ai/0/1834156727516270592/1805415525119955000/1750654919810_1slots.png',
+                  'https://cdn.mezon.ai/0/1834156727516270592/1805415525119955000/1751356942745_1slots.png',
                 url_position:
-                  'https://cdn.mezon.ai/0/1834156727516270592/1805415525119955000/1750654919802_slots.json',
+                  'https://cdn.mezon.ai/0/1834156727516270592/1827994776956309500/1751357108975_slots.json',
                 jackpot: Number(currentJackPot),
                 pool: results,
                 repeat: 3,
@@ -707,9 +707,9 @@ export class SlotsCommand extends CommandMessage {
                 type: EMessageComponentType.ANIMATION,
                 component: {
                   url_image:
-                    'https://cdn.mezon.ai/0/1834156727516270592/1805415525119955000/1750654919810_1slots.png',
+                    'https://cdn.mezon.ai/0/1834156727516270592/1805415525119955000/1751356942745_1slots.png',
                   url_position:
-                    'https://cdn.mezon.ai/0/1834156727516270592/1805415525119955000/1750654919802_slots.json',
+                    'https://cdn.mezon.ai/0/1834156727516270592/1827994776956309500/1751357108975_slots.json',
                   jackpot: Math.floor(Number(currentJackPot)),
                   pool: results,
                   repeat: 3,
