@@ -575,7 +575,7 @@ export class SlotsCommand extends CommandMessage {
       if (
         number[0] === number[1] &&
         number[1] === number[2] &&
-        slotItems[number[0]] === '0.png'
+        slotItems[number[0]] === '1.png'
       ) {
         wonAmount = Math.floor(currentJackPot * 0.8);
         isJackPot = true;
