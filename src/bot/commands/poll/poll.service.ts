@@ -44,27 +44,6 @@ export class PollService {
     '🔟 ',
   ];
 
-  getOptionPoll(pollString: string) {
-    let option;
-    const regex = /\d️⃣:\s*(.*)/g;
-    const options: any[] = [];
-    while ((option = regex.exec(pollString)) !== null) {
-      options.push(option[1].trim());
-    }
-
-    return options;
-  }
-
-  getPollTitle(pollString: string) {
-    let pollTitle;
-    const match = pollString.toString().match(/\[Poll\] - (.*)\n/);
-    if (match && match[1]) {
-      pollTitle = match[1];
-    }
-
-    return pollTitle;
-  }
-
   generateEmbedComponents(options, data?) {
     const embedCompoents = options.map((option, index) => {
       const userVoted = data?.[index];
@@ -83,13 +62,13 @@ export class PollService {
     authorName: string,
     color: string,
     embedCompoents,
+    time,
   ) {
     return [
       {
         color,
         title: `[Poll] - ${title}`,
-        description:
-          'Select option you want to vote.\nThe voting will end in 7 days.\nPoll creater can end the poll forcefully by click Finish button.',
+        description: `Select option you want to vote.\nThe voting will end in ${time ? `${time} hours` : '7 days'} .\nPoll creater can end the poll forcefully by click Finish button.`,
         fields: [
           {
             name: '',
@@ -349,12 +328,17 @@ export class PollService {
           groupedByValue,
         );
 
+        const create = findMessagePoll.createAt;
+        const timeLeftInMs = findMessagePoll.expireAt - create;
+        const timeLeftInHours = Math.floor(timeLeftInMs / (60 * 60 * 1000));
+
         // embed poll
         const embed: EmbedProps[] = this.generateEmbedMessage(
           title,
           authorName,
           color,
           embedCompoents,
+          timeLeftInHours === 168 ? null : timeLeftInHours,
         );
         const dataGenerateButtonComponents = {
           sender_id: authId,

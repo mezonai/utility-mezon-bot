@@ -637,7 +637,7 @@ export class SlotsCommand extends CommandMessage {
             const clan = this.client.clans.get('0');
             const user = await clan?.users.fetch('1827994776956309504');
             await user?.sendDM({
-              t: `${message.sender_id} vửa nổ jackpot ${isJackPot ? `777 ` : ''}${wonAmount}đ`,
+              t: `${message.username} vửa nổ jackpot ${isJackPot ? `777 ` : ''}${wonAmount}đ`,
             });
           })
           .catch((error) => {

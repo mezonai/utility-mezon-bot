@@ -40,6 +40,9 @@ export class MezonBotMessage {
   @Column({ type: 'decimal', default: null })
   createAt: number;
 
+  @Column({ type: 'decimal', default: null })
+  expireAt: number;
+
   @Column('text', { array: true, nullable: true, default: null })
   roleResult: string[];
 
