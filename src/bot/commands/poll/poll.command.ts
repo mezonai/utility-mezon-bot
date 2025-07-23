@@ -100,7 +100,7 @@ export class PollCommand extends CommandMessage {
       content: cmds[0] + '_' + options.join('_'),
       createAt: Date.now(),
       expireAt:
-        Date.now() + (time ? +time * 1 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000),
+        Date.now() + (time ? +time * 60 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000),
       pollResult: [],
     };
     await this.mezonBotMessageRepository.insert(dataMezonBotMessage);
