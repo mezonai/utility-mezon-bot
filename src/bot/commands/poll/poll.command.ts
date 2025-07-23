@@ -26,16 +26,30 @@ export class PollCommand extends CommandMessage {
       return;
     }
     let messageContent = '';
-    const cmds = args.join(' ').split('+');
-    const options = cmds.slice(1).filter(Boolean);
+    const cmds = args
+      .join(' ')
+      .split('+')
+      .map((s) => s.trim());
 
+    let options = cmds.slice(1).filter(Boolean);
+
+    let time = 0;
+
+    const last = options[options.length - 1];
+    const match = last?.match(/^(.*?)(?:\s*-\s*)(\d+)$/);
+
+    if (match) {
+      options[options.length - 1] = match[1].trim();
+      time = +match[2];
+    }
+  
     if (
       !cmds.length ||
       !options.length ||
       options.length < 2 ||
       options.length > 10
     ) {
-      const exampleText = `\nExample: *poll title + option1 + option2 + ...`;
+      const exampleText = `\nExample: *poll title + option1 + option2 + ... (- hours schedule) => Default 7 days \n- Set 5 hours countdown: *poll title + option1 + option2 - 5`;
       if (!cmds?.[0]) {
         messageContent = 'Poll title is not given!' + exampleText;
       } else if (!options.length) {
@@ -64,6 +78,7 @@ export class PollCommand extends CommandMessage {
       message.clan_nick || message.username!,
       colorEmbed,
       embedCompoents,
+      time,
     );
     const components = this.pollService.generateButtonComponents({
       ...message,
@@ -84,6 +99,8 @@ export class PollCommand extends CommandMessage {
       channelId: message.channel_id,
       content: cmds[0] + '_' + options.join('_'),
       createAt: Date.now(),
+      expireAt:
+        Date.now() + (time ? +time * 1 * 60 * 1000 : 7 * 24 * 60 * 60 * 1000),
       pollResult: [],
     };
     await this.mezonBotMessageRepository.insert(dataMezonBotMessage);
