@@ -24,6 +24,7 @@ import { ExtendersService } from '../services/extenders.services';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from '../models/user.entity';
+import { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
 
 @Injectable()
 export class BotGateway {
@@ -45,7 +46,7 @@ export class BotGateway {
       this.eventEmitter.emit(Events.TokenSend, data);
     });
 
-    this.client.onMessageButtonClicked((data) => {
+    this.client.onMessageButtonClicked((data: MessageButtonClicked) => {
       this.eventEmitter.emit(Events.MessageButtonClicked, data);
     });
 

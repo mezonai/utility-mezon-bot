@@ -28,6 +28,9 @@ export class ListenerMessageButtonClicked {
         case 'poll':
           this.handleSelectPoll(data);
           break;
+        case 'pollCreate':
+          this.handleCreatePoll(data);
+          break;
         case 'role':
           this.handleSelectRole(data);
           break;
@@ -62,6 +65,14 @@ export class ListenerMessageButtonClicked {
       await this.pollService.handleSelectPoll(data);
     } catch (error) {
       console.log('ERORR handleSelectPoll', error);
+    }
+  }
+
+  async handleCreatePoll(data) {
+    try {
+      await this.pollService.handleCreatePoll(data);
+    } catch (error) {
+      console.log('ERORR handleCreatePoll', error);
     }
   }
 

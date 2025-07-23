@@ -48,7 +48,9 @@ export enum EmbebButtonType {
   DELETE = 'DELETE',
   SELL = 'SELL',
   DONE = 'DONE',
-  BUY = 'BUY'
+  BUY = 'BUY',
+  CREATE = 'CREATE',
+  ADD = 'ADD',
 }
 
 export enum FuncType {
