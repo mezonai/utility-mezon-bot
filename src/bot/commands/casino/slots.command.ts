@@ -724,7 +724,7 @@ export class SlotsCommand extends CommandMessage {
         setTimeout(() => {
           messageBot?.update({ embed: [msgResults] });
           this.replyStatsService.trackReply();
-        }, 300);
+        }, 1300);
       });
     } finally {
       await this.redisCacheService.releaseLock(lockKey);
