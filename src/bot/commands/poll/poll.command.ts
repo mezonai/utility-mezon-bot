@@ -16,6 +16,9 @@ export class PollCommand extends CommandMessage {
   }
 
   async execute(args: string[], message: ChannelMessage, commandName?: string) {
+    if (message.clan_id === '1779484504377790464') {
+      return;
+    }
     const messageChannel = await this.getChannelMessage(message);
     const defaultNumberOption = 2;
     const color = getRandomColor();
