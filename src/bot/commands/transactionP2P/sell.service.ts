@@ -351,9 +351,7 @@ export class SellService {
 
       if (typeButtonRes === EmbebButtonType.BUY) {
         const rawOrderList = JSON.parse(data.extra_data);
-        const parsedOrders = rawOrderList.MySellOrder.map((item) =>
-          JSON.parse(item),
-        );
+        const parsedOrders = [JSON.parse(rawOrderList.MySellOrder)]
         for (const sellOrder of parsedOrders) {
           if (data.user_id === sellOrder.sellerId) {
             return;
