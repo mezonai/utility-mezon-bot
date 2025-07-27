@@ -61,3 +61,8 @@ export enum FuncType {
   TRANSACTION = 'transaction',
   ALL = 'all'
 }
+
+export enum PollType {
+  SINGLE = 'SINGLE',
+  MULTIPLE = 'MULTIPLE'
+}
