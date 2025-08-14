@@ -19,6 +19,7 @@ import { MezonBotMessage } from 'src/bot/models/mezonBotMessage.entity';
 import { MezonClientService } from 'src/mezon/services/mezon-client.service';
 import { getRandomColor } from 'src/bot/utils/helps';
 import { TransactionP2P } from 'src/bot/models/transactionP2P.entity';
+import { UserCacheService } from 'src/bot/services/user-cache.service';
 // import { EUserError } from '../constants/error';
 
 @Injectable()
@@ -32,6 +33,7 @@ export class SellService {
     @InjectRepository(TransactionP2P)
     private transactionP2PRepository: Repository<TransactionP2P>,
     private clientService: MezonClientService,
+    private userCacheService: UserCacheService,
   ) {
     this.client = this.clientService.getClient();
   }
@@ -170,7 +172,10 @@ export class SellService {
       const findUser = await this.userRepository.findOne({
         where: { user_id: data.user_id },
       });
-      if (!findUser) return;
+      const userCache = await this.userCacheService.getUserFromCache(
+        data.user_id,
+      );
+      if (!findUser || !userCache) return;
 
       const activeBan = Array.isArray(findUser.ban)
         ? findUser.ban.find(
@@ -250,8 +255,8 @@ export class SellService {
         }
 
         if (
-          (findUser.amount || 0) < totalAmountValue ||
-          isNaN(findUser.amount)
+          (userCache.amount || 0) < totalAmountValue ||
+          isNaN(userCache.amount)
         ) {
           const textCancel = '💸Số dư của bạn không đủ!';
           const msgCancel = {
@@ -261,8 +266,9 @@ export class SellService {
           return await messsage.update(msgCancel);
         }
 
-        findUser.amount = Number(findUser.amount) - totalAmountValue;
-        await this.userRepository.save(findUser);
+        userCache.amount = Number(userCache.amount) - totalAmountValue;
+        await this.userCacheService.updateUserCache(data.user_id, userCache);
+
         const resultEmbed = {
           color: getRandomColor(),
           title: `[Sell] ${descriptionValue}`,
@@ -306,12 +312,12 @@ export class SellService {
           if (tx.buyerName || tx.buyerId) {
             continue;
           }
-          findUser.amount =
-            Number(findUser.amount) + Number(tx.amountLock.amount);
-          if (isNaN(findUser.amount)) {
+          userCache.amount =
+            Number(userCache.amount) + Number(tx.amountLock.amount);
+          if (isNaN(userCache.amount)) {
             return;
           }
-          await this.userRepository.save(findUser);
+          await this.userCacheService.updateUserCache(data.user_id, userCache);
           await this.transactionP2PRepository.update(
             {
               id: sellOrder.id,
@@ -351,7 +357,7 @@ export class SellService {
 
       if (typeButtonRes === EmbebButtonType.BUY) {
         const rawOrderList = JSON.parse(data.extra_data);
-        const parsedOrders = [JSON.parse(rawOrderList.MySellOrder)]
+        const parsedOrders = [JSON.parse(rawOrderList.MySellOrder)];
         for (const sellOrder of parsedOrders) {
           if (data.user_id === sellOrder.sellerId) {
             return;
@@ -668,28 +674,24 @@ export class SellService {
           return;
         }
 
-        const findUser = await this.userRepository.findOne({
-          where: { user_id: buyer.id },
-        });
-        if (!findUser) return;
+        const userCache = await this.userCacheService.getUserFromCache(
+          buyer.id,
+        );
+        if (!userCache) return;
 
         if (
           isNaN(
-            Number(findUser.amount) + Number(transaction.amountLock.amount),
+            Number(userCache.amount) + Number(transaction.amountLock.amount),
           ) ||
-          isNaN(Number(findUser.amount)) ||
+          isNaN(Number(userCache.amount)) ||
           isNaN(Number(transaction.amountLock.amount))
         ) {
-          console.log('Number(findUser.amount): ', Number(findUser.amount));
-          console.log(
-            'Number(transaction.amountLock.amount): ',
-            Number(transaction.amountLock.amount),
-          );
           return;
         }
-        findUser.amount =
-          Number(findUser.amount) + Number(transaction.amountLock.amount);
-        await this.userRepository.save(findUser);
+        userCache.amount =
+          Number(userCache.amount) + Number(transaction.amountLock.amount);
+
+        await this.userCacheService.updateUserCache(buyer.id, userCache);
 
         transaction.deleted = true;
         await this.transactionP2PRepository.save(transaction);

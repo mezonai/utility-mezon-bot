@@ -19,6 +19,7 @@ import { MezonBotMessage } from 'src/bot/models/mezonBotMessage.entity';
 import { MezonClientService } from 'src/mezon/services/mezon-client.service';
 import { getRandomColor } from 'src/bot/utils/helps';
 import { TransactionP2P } from 'src/bot/models/transactionP2P.entity';
+import { UserCacheService } from 'src/bot/services/user-cache.service';
 // import { EUserError } from '../constants/error';
 
 @Injectable()
@@ -32,6 +33,7 @@ export class BuyService {
     @InjectRepository(TransactionP2P)
     private transactionP2PRepository: Repository<TransactionP2P>,
     private clientService: MezonClientService,
+    private userCacheService: UserCacheService,
   ) {
     this.client = this.clientService.getClient();
   }
@@ -355,9 +357,11 @@ export class BuyService {
             continue;
           }
 
+          const userCache = await this.userCacheService.getUserFromCache(data.user_id);
+          if (!userCache) return
           if (
-            (findUser.amount || 0) < Number(buyOrder.amount) ||
-            isNaN(findUser.amount)
+            (userCache.amount || 0) < Number(buyOrder.amount) ||
+            isNaN(userCache.amount)
           ) {
             const content = `[transacion] - \n❌Số dư của bạn không đủ hoặc không hợp lệ!`;
             return await seller.sendDM({
@@ -366,8 +370,9 @@ export class BuyService {
             });
           }
 
-          findUser.amount = Number(findUser.amount) - Number(buyOrder.amount);
-          await this.userRepository.save(findUser);
+          userCache.amount = Number(userCache.amount) - Number(buyOrder.amount);
+          await this.userCacheService.updateUserCache(data.user_id, userCache);
+
           transaction.amountLock = {
             username: findUser.username,
             amount: buyOrder.amount,
@@ -672,23 +677,20 @@ export class BuyService {
           return;
         }
 
-        const findUser = await this.userRepository.findOne({
-          where: { user_id: buyer.id },
-        });
-        if (!findUser) return;
+        const user = await this.userCacheService.getUserFromCache(buyer.id);
+        if (!user) return;
 
         if (
-          isNaN(
-            Number(findUser.amount) + Number(transaction.amountLock.amount),
-          ) ||
-          isNaN(Number(findUser.amount)) ||
+          isNaN(Number(user.amount) + Number(transaction.amountLock.amount)) ||
+          isNaN(Number(user.amount)) ||
           isNaN(Number(transaction.amountLock.amount))
         ) {
           return;
         }
-        findUser.amount =
-          Number(findUser.amount) + Number(transaction.amountLock.amount);
-        await this.userRepository.save(findUser);
+        user.amount =
+          Number(user.amount) + Number(transaction.amountLock.amount);
+
+        await this.userCacheService.updateUserCache(buyer.id, user);
 
         transaction.deleted = true;
         await this.transactionP2PRepository.save(transaction);

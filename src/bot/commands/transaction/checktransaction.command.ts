@@ -53,8 +53,9 @@ export class ChecktransactionCommand extends CommandMessage {
       const findBot = await this.userRepository.findOne({
         where: { user_id: process.env.UTILITY_BOT_ID },
       });
+      if (!findBot) return
       await messageChannel?.reply({
-        t: `Tổng tiền user: ${totalAmount - (findBot?.amount ?? 0)}, Tiền POT: ${findBot?.jackPot ?? 0}, , Tiền user + pot: ${+(+totalAmount - (findBot?.amount ?? 0)) + (findBot?.jackPot ?? 0)} \n , Tiền bot: ${findBot?.amount ?? ''}`,
+        t: `Tổng tiền user: ${(+totalAmount - (+findBot.amount)).toLocaleString('vi-VN')}, Tiền POT: ${(+findBot?.jackPot).toLocaleString('vi-VN')}\nTiền user + pot: ${(+(+totalAmount - (+findBot.amount)) + (+findBot?.jackPot)).toLocaleString('vi-VN')}\nTiền bot: ${(+findBot?.amount).toLocaleString('vi-VN')}`,
       });
       return;
     }
