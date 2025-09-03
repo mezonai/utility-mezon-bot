@@ -49,7 +49,7 @@ export class SellService {
           sellerId: option.sellerId,
           sellerName: option.sellerName,
         }),
-        description: `Amount: ${option?.amount ? `${option?.amount.toLocaleString()}đ` : '0'}\n By: ${option.amountLock.username} ${option.buyerId ? '\n Đang được giao dịch' : ''}`,
+        description: `Amount: ${option?.amount ? `${(+option?.amount).toLocaleString()}đ` : '0'}\n By: ${option.amountLock.username} ${option.buyerId ? '\n Đang được giao dịch' : ''}`,
         style: EButtonMessageStyle.SUCCESS,
         name: option.id,
         disabled: option.buyerId ? true : false,
@@ -117,7 +117,7 @@ export class SellService {
           sellerId: option.sellerId,
           sellerName: option.sellerName,
         }),
-        description: `Amount: ${option?.amount ? `${option?.amount.toLocaleString()}đ` : '0'} \n By: ${option.amountLock.username} ${option.buyerId ? '\n Đang được giao dịch' : ''}`,
+        description: `Amount: ${option?.amount ? `${(+option?.amount).toLocaleString()}đ` : '0'} \n By: ${option.amountLock.username} ${option.buyerId ? '\n Đang được giao dịch' : ''}`,
         style: EButtonMessageStyle.SUCCESS,
         disabled: option.buyerId ? true : false,
       };
@@ -272,7 +272,7 @@ export class SellService {
         const resultEmbed = {
           color: getRandomColor(),
           title: `[Sell] ${descriptionValue}`,
-          description: `Token: ${totalAmountValue.toLocaleString()}đ`,
+          description: `Token: ${(+totalAmountValue).toLocaleString()}đ`,
         };
 
         messsage.update({
