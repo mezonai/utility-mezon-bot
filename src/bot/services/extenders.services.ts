@@ -41,7 +41,7 @@ export class ExtendersService {
     const komuUser = {
       user_id: user.user_id,
       username: user.username,
-      avatar: user.clan_avatar || user.avatar,
+      avatar: user.avatar,
       bot: false,
       display_name: user.display_name ?? '',
       clan_nick: user.clan_nick ?? '',
