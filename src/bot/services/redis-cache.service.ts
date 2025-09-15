@@ -10,6 +10,7 @@ export interface UserCache {
   clan_nick?: string;
   jackPot?: number;
   lastUpdated: number;
+  avatar?: string;
 }
 
 export interface BotCache {

@@ -3,6 +3,7 @@ import { Repository } from 'typeorm';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from '../models/user.entity';
 import { UserCacheService } from './user-cache.service';
+import { RedisCacheService } from './redis-cache.service';
 
 interface SharedUserProperties {
   user_id: string;
@@ -19,6 +20,7 @@ export class ExtendersService {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     private userCacheService: UserCacheService,
+    private redisCacheService: RedisCacheService,
   ) {}
 
   async addDBUser(
@@ -35,6 +37,11 @@ export class ExtendersService {
     );
 
     if (cachedUser) {
+      this.redisCacheService.updateUserCache(user.user_id, {
+        username: user.username,
+        avatar: user.avatar,
+        clan_nick: user.clan_nick,
+      });
       return;
     }
 
