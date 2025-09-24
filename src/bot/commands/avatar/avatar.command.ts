@@ -5,6 +5,7 @@ import { Command } from 'src/bot/base/commandRegister.decorator';
 import { EmbedProps } from 'src/bot/constants/configs';
 import { EUserError } from 'src/bot/constants/error';
 import { User } from 'src/bot/models/user.entity';
+import { RedisCacheService } from 'src/bot/services/redis-cache.service';
 import { getRandomColor } from 'src/bot/utils/helps';
 import { MezonClientService } from 'src/mezon/services/mezon-client.service';
 import { Repository } from 'typeorm';
@@ -15,6 +16,7 @@ export class AvatarCommand extends CommandMessage {
     @InjectRepository(User)
     private userRepository: Repository<User>,
     clientService: MezonClientService,
+    private redisCacheService: RedisCacheService,
   ) {
     super(clientService);
   }
@@ -66,7 +68,8 @@ export class AvatarCommand extends CommandMessage {
       where: { username: userQuery },
     });
 
-    if (!findUser)
+    const user = await this.redisCacheService.getUserCache(findUser?.user_id!);
+    if (!user || !findUser)
       return await messageChannel?.reply({
         t: EUserError.INVALID_USER,
         mk: [
@@ -77,17 +80,18 @@ export class AvatarCommand extends CommandMessage {
           },
         ],
       });
+
     const embed: EmbedProps[] = [
       {
         color: getRandomColor(),
         title: `${findUser.clan_nick || findUser.username}'s avatar`,
         author: {
           name: findUser.clan_nick || findUser.username,
-          icon_url: findUser.avatar,
-          url: findUser.avatar,
+          icon_url: user.avatar,
+          url: user.avatar,
         },
         image: {
-          url: findUser.avatar,
+          url: user?.avatar ?? '',
           width: '400px',
           height: '400px',
         },
