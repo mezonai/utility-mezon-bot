@@ -226,7 +226,7 @@ export class WithdrawTokenCommand extends CommandMessage {
       };
       await this.client.sendToken(dataSendToken);
 
-      const successMessage = `💸Rút ${money.toLocaleString('vi-VN')} token thành công`;
+      const successMessage = `💸Rút ${money.toLocaleString('vi-VN')} mezon đồng thành công!`;
       await messageChannel?.reply({
         t: successMessage,
         mk: [{ type: EMarkdownType.PRE, s: 0, e: successMessage.length }],
