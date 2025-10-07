@@ -40,7 +40,7 @@ export class ChecktransactionCommand extends CommandMessage {
       .where('user.amount > 0')
       .getRawOne();
 
-    const totalAmount = result.total_amount;
+    const totalAmount = Number(result?.total_amount ?? 0);
     return totalAmount;
   }
 
