@@ -41,7 +41,7 @@ export class ChecktransactionCommand extends CommandMessage {
       .getRawOne();
 
     const totalAmount = Number(result?.total_amount ?? 0);
-    return totalAmount;
+    return { result, totalAmount };
   }
 
   async execute(args: string[], message: ChannelMessage) {
@@ -49,7 +49,7 @@ export class ChecktransactionCommand extends CommandMessage {
     if (args[0] === 'admin') {
       if (message.sender_id !== '1827994776956309504') return;
       const messageChannel = await this.getChannelMessage(message);
-      const totalAmount = await this.getTotalAmountUser();
+      const { result, totalAmount } = await this.getTotalAmountUser();
       const findBot = await this.userRepository.findOne({
         where: { user_id: process.env.UTILITY_BOT_ID },
       });
@@ -59,7 +59,7 @@ export class ChecktransactionCommand extends CommandMessage {
 
       if (!findBot) return;
       await messageChannel?.reply({
-        t: `Tổng tiền user: ${total.toLocaleString('vi-VN')}, Tiền POT: ${(+findBot?.jackPot).toLocaleString('vi-VN')}\nTiền user + pot: ${(total + +findBot?.jackPot).toLocaleString('vi-VN')}\nTiền bot: ${(+findBot?.amount).toLocaleString('vi-VN')}`,
+        t: `${JSON.stringify(result)} \nTổng tiền user: ${total.toLocaleString('vi-VN')}, Tiền POT: ${(+findBot?.jackPot).toLocaleString('vi-VN')}\nTiền user + pot: ${(total + +findBot?.jackPot).toLocaleString('vi-VN')}\nTiền bot: ${(+findBot?.amount).toLocaleString('vi-VN')}`,
       });
       return;
     }
