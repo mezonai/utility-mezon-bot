@@ -36,7 +36,7 @@ export class ChecktransactionCommand extends CommandMessage {
   async getTotalAmountUser() {
     const result = await this.userRepository
       .createQueryBuilder('user')
-      .select('SUM(user.amount)', 'total_amount')
+      .select('COALESCE(SUM(user.amount), 0)', 'total_amount')
       .where('user.amount > 0')
       .getRawOne();
 
