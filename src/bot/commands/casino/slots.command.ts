@@ -647,10 +647,20 @@ export class SlotsCommand extends CommandMessage {
           .then(async () => {
             if (wonAmount === money * 2) return;
             const clan = this.client.clans.get('0');
-            const user = await clan?.users.fetch('1827994776956309504');
-            await user?.sendDM({
-              t: `${message.username} vửa nổ jackpot ${isJackPot ? `777 ` : ''}${wonAmount}đ`,
-            });
+            const [user, userPlay] = await Promise.all([
+              clan?.users.fetch('1827994776956309504'),
+              clan?.users.fetch(message.sender_id),
+            ]);
+            if (!user || !userPlay) return;
+            const jackpotText = `nổ jackpot ${isJackPot ? '777 ' : ''}${wonAmount.toLocaleString('vi-VN')}đ`;
+            await Promise.all([
+              user.sendDM({
+                t: `${message.username} vừa ${jackpotText}`,
+              }),
+              userPlay.sendDM({
+                t: `Bạn vừa ${jackpotText}`,
+              }),
+            ]);
           })
           .catch((error) => {
             console.error('Error inserting jackpot transaction:', error);
