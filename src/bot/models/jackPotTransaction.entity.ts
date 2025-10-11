@@ -7,6 +7,11 @@ export enum JackpotType {
   REGULAR = 'regular'
 }
 
+export enum SlotsType {
+  K3 = '3k',
+  K1 = '1k'
+}
+
 @Index(['id', 'user_id'])
 @Entity(TABLE.JACKPOT_TRANSACTION)
 export class JackPotTransaction {
@@ -27,6 +32,9 @@ export class JackPotTransaction {
 
   @Column({ type: 'text', nullable: true })
   type: JackpotType;
+
+  @Column({ type: 'text', nullable: true, default: null })
+  typeSlots: SlotsType | null;
   
   @Column({ type: 'bigint', default: null })
   createAt: number;

@@ -36,11 +36,17 @@ export class ChecktransactionCommand extends CommandMessage {
   async getTotalAmountUser() {
     const result = await this.userRepository
       .createQueryBuilder('user')
-      .select('COALESCE(SUM(user.amount), 0)', 'total_amount')
-      .where('user.amount > 0')
+      .select(
+        `
+          COALESCE(
+            SUM(CASE WHEN user.amount > 0 THEN user.amount ELSE 0 END),
+          0)
+        `,
+        'total_amount',
+      )
       .getRawOne();
 
-    const totalAmount = Number(result?.total_amount ?? 0);
+    const totalAmount = parseFloat(result?.total_amount ?? '0') || 0;
     return { result, totalAmount };
   }
 
@@ -58,8 +64,10 @@ export class ChecktransactionCommand extends CommandMessage {
       const total = Number(totalAmount) - botAmount;
 
       if (!findBot) return;
+      const totalPot =
+        +findBot?.jackPot + +findBot?.jackPot1k + +findBot?.jackPot3k;
       await messageChannel?.reply({
-        t: `${JSON.stringify(result)} \nTổng tiền user: ${total.toLocaleString('vi-VN')}, Tiền POT: ${(+findBot?.jackPot).toLocaleString('vi-VN')}\nTiền user + pot: ${(total + +findBot?.jackPot).toLocaleString('vi-VN')}\nTiền bot: ${(+findBot?.amount).toLocaleString('vi-VN')}`,
+        t: `${JSON.stringify(result)} \nTổng tiền user: ${total.toLocaleString('vi-VN')}, Tiền POT: ${totalPot.toLocaleString('vi-VN')}\nTiền user + pot: ${(total + totalPot).toLocaleString('vi-VN')}\nTiền bot: ${(+findBot?.amount).toLocaleString('vi-VN')}`,
       });
       return;
     }

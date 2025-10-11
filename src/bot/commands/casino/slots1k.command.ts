@@ -8,13 +8,14 @@ import { CommandMessage } from 'src/bot/base/command.abstract';
 import { Command } from 'src/bot/base/commandRegister.decorator';
 import { User } from 'src/bot/models/user.entity';
 import { MezonClientService } from 'src/mezon/services/mezon-client.service';
-import { IsNull, Not, Repository } from 'typeorm';
+import { Not, Repository } from 'typeorm';
 import { getRandomColor } from 'src/bot/utils/helps';
 import { EUserError } from 'src/bot/constants/error';
 import { EmbedProps, FuncType } from 'src/bot/constants/configs';
 import {
   JackPotTransaction,
   JackpotType,
+  SlotsType,
 } from 'src/bot/models/jackPotTransaction.entity';
 import { RedisCacheService } from 'src/bot/services/redis-cache.service';
 import { BaseQueueProcessor } from 'src/bot/base/queue-processor.base';
@@ -39,8 +40,8 @@ const slotItems = [
   '15.png',
 ];
 
-@Command('slots')
-export class SlotsCommand extends CommandMessage {
+@Command('slots1k')
+export class Slots1KCommand extends CommandMessage {
   private queueProcessor: BaseQueueProcessor<ChannelMessage>;
   private notifiedUsers: Map<string, number> = new Map();
   private readonly QUEUE_LIMIT = 50;
@@ -60,8 +61,8 @@ export class SlotsCommand extends CommandMessage {
 
     this.queueProcessor =
       new (class extends BaseQueueProcessor<ChannelMessage> {
-        constructor(private slotsCommand: SlotsCommand) {
-          super('SlotsCommand', 1, 25000);
+        constructor(private slotsCommand: Slots1KCommand) {
+          super('Slots1KCommand', 1, 25000);
         }
 
         protected async processItem(message: ChannelMessage): Promise<void> {
@@ -103,10 +104,10 @@ export class SlotsCommand extends CommandMessage {
         'UtilityBot',
         'UtilityBot',
       );
-      return Number(newBotCache?.jackPot) || 0;
+      return Number(newBotCache?.jackPot1k) || 0;
     }
-
-    return Number(botCache.jackPot) || 0;
+    console.log('botCache', botCache);
+    return Number(botCache.jackPot1k) || 0;
   }
 
   private async updateBotJackpot(
@@ -130,7 +131,7 @@ export class SlotsCommand extends CommandMessage {
 
     try {
       await this.userCacheService.updateUserCache(botId, {
-        jackPot: Number(newJackpot),
+        jackPot1k: Number(newJackpot),
       });
       return true;
     } finally {
@@ -142,7 +143,7 @@ export class SlotsCommand extends CommandMessage {
     const rawData = await this.jackPotTransaction.find({
       where: {
         type: Not(JackpotType.REGULAR),
-        typeSlots: IsNull(),
+        typeSlots: SlotsType.K1,
       },
       order: { createAt: 'DESC' },
       take: 10,
@@ -182,14 +183,14 @@ export class SlotsCommand extends CommandMessage {
         'totalAmountJackPot',
       )
       .where(
-        `jackpot.user_id = :userId 
-        AND jackpot.type = :regularType 
-        AND jackpot.typeSlots IS NULL`,
+        `jackpot.user_id = :userId
+        AND jackpot.typeSlots = :typeSlots`,
       )
       .setParameters({
         userId,
         regularType: JackpotType.REGULAR,
         jackpotType: JackpotType.JACKPOT,
+        typeSlots: SlotsType.K1,
       })
       .groupBy('jackpot.user_id')
       .getRawOne();
@@ -214,13 +215,15 @@ export class SlotsCommand extends CommandMessage {
       )
       .where('jackpot.type != :regularType', {
         regularType: JackpotType.REGULAR,
-        winType: JackpotType.WIN,
-        jackpotType: JackpotType.JACKPOT,
       })
-      .andWhere('jackpot.typeSlots IS NULL')
+      .andWhere('jackpot.typeSlots = :typeSlots', { typeSlots: SlotsType.K1 })
       .groupBy('jackpot.user_id')
       .orderBy('totalamount', 'DESC')
       .limit(5)
+      .setParameters({
+        winType: JackpotType.WIN,
+        jackpotType: JackpotType.JACKPOT,
+      })
       .getRawMany();
     return await Promise.all(
       rawData.map(async (r) => {
@@ -501,7 +504,7 @@ export class SlotsCommand extends CommandMessage {
 
   public async processSlotMessage(message: ChannelMessage) {
     const messageChannel = await this.getChannelMessage(message);
-    const money = 5000;
+    const money = 1000;
 
     const lockKey = `slot_${message.sender_id}`;
     const lockAcquired = await this.redisCacheService.acquireLock(lockKey, 5);
@@ -640,6 +643,7 @@ export class SlotsCommand extends CommandMessage {
             user_id: message.sender_id,
             amount: Number(wonAmount),
             type: typeWin,
+            typeSlots: SlotsType.K1,
             createAt: Date.now(),
             clan_id: message.clan_id,
             channel_id: message.channel_id,
@@ -647,10 +651,20 @@ export class SlotsCommand extends CommandMessage {
           .then(async () => {
             if (wonAmount === money * 2) return;
             const clan = this.client.clans.get('0');
-            const user = await clan?.users.fetch('1827994776956309504');
-            await user?.sendDM({
-              t: `${message.username} vửa nổ jackpot ${isJackPot ? `777 ` : ''}${wonAmount}đ`,
-            });
+            const [user, userPlay] = await Promise.all([
+              clan?.users.fetch('1827994776956309504'),
+              clan?.users.fetch(message.sender_id),
+            ]);
+            if (!user || !userPlay) return;
+            const jackpotText = `nổ jackpot 1K ${isJackPot ? '777 ' : ''}${wonAmount.toLocaleString('vi-VN')}đ`;
+            await Promise.all([
+              user.sendDM({
+                t: `${message.username} vừa ${jackpotText}`,
+              }),
+              userPlay.sendDM({
+                t: `Bạn vừa ${jackpotText}`,
+              }),
+            ]);
           })
           .catch((error) => {
             console.error('Error inserting jackpot transaction:', error);

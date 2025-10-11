@@ -11,6 +11,8 @@ export interface UserCache {
   jackPot?: number;
   lastUpdated: number;
   avatar?: string;
+  jackPot1k?: number;
+  jackPot3k?: number;
 }
 
 export interface BotCache {
