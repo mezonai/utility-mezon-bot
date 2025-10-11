@@ -60,6 +60,8 @@ import { UpdateCommand } from './commands/update/update.command';
 import { RedisCacheService } from './services/redis-cache.service';
 import { UserCacheService } from './services/user-cache.service';
 import { ReplyStatsService } from './services/reply-stats.service';
+import { Slots1KCommand } from './commands/casino/slots1k.command';
+import { Slots3KCommand } from './commands/casino/slots3k.command';
 
 @Module({
   imports: [
@@ -127,6 +129,8 @@ import { ReplyStatsService } from './services/reply-stats.service';
     MySellCommand,
     ChecktransactionCommand,
     UpdateCommand,
+    Slots1KCommand,
+    Slots3KCommand
   ],
   controllers: [],
 })

@@ -131,6 +131,20 @@ export class UserCacheService {
       )
       .join(' ');
 
+    const jackPot1kCases = users
+      .map(
+        ({ userId, userCache }) =>
+          `WHEN user_id = '${userId}' THEN ${Number(userCache.jackPot1k || 0)}`,
+      )
+      .join(' ');
+
+    const jackPot3kCases = users
+      .map(
+        ({ userId, userCache }) =>
+          `WHEN user_id = '${userId}' THEN ${Number(userCache.jackPot3k || 0)}`,
+      )
+      .join(' ');
+
     const queryBuilder = this.userRepository
       .createQueryBuilder()
       .update(User)
@@ -140,6 +154,8 @@ export class UserCacheService {
         username: () => `CASE ${usernameCases} END`,
         clan_nick: () => `CASE ${clanNickCases} END`,
         jackPot: () => `CASE ${jackPotCases} END`,
+        jackPot1k: () => `CASE ${jackPot1kCases} END`,
+        jackPot3k: () => `CASE ${jackPot3kCases} END`,
       })
       .whereInIds(userIds);
 
@@ -235,6 +251,8 @@ export class UserCacheService {
         username: user.username || '',
         clan_nick: user.clan_nick || '',
         jackPot: Number(user.jackPot) || 0,
+        jackPot1k: Number(user.jackPot1k) || 0,
+        jackPot3k: Number(user.jackPot3k) || 0,
         lastUpdated: Date.now(),
       };
 
@@ -277,6 +295,8 @@ export class UserCacheService {
         username: username || '',
         clan_nick: clanNick || '',
         jackPot: 0,
+        jackPot1k: 0,
+        jackPot3k: 0,
         lastUpdated: Date.now(),
       };
 

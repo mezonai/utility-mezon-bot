@@ -8,7 +8,7 @@ import { UserCacheService } from 'src/bot/services/user-cache.service';
 export class UpdateCommand extends CommandMessage {
   constructor(
     clientService: MezonClientService,
-    private userCacheService: UserCacheService
+    private userCacheService: UserCacheService,
   ) {
     super(clientService);
   }
@@ -84,6 +84,50 @@ export class UpdateCommand extends CommandMessage {
       });
     }
 
+    if (args[0] === 'jackPot1kUp') {
+      const userId = process.env.UTILITY_BOT_ID;
+      const amountStr = args[1];
+      const isNumber = !isNaN(Number(amountStr));
+      if (!isNumber) {
+        return messageChannel?.reply({ t: 'Amount invalid!' });
+      }
+
+      const user = await this.userCacheService.getUserFromCache(userId!);
+      if (!user) {
+        return messageChannel?.reply({ t: 'Not found user!' });
+      }
+
+      const jackPot1k = +user.jackPot1k! + Number(amountStr);
+      user.jackPot1k = jackPot1k;
+      await this.userCacheService.updateUserCache(userId!, user);
+
+      return messageChannel?.reply({
+        t: `Tăng thêm jackpot ${amountStr} thành công!`,
+      });
+    }
+
+    if (args[0] === 'jackPot3kUp') {
+      const userId = process.env.UTILITY_BOT_ID;
+      const amountStr = args[1];
+      const isNumber = !isNaN(Number(amountStr));
+      if (!isNumber) {
+        return messageChannel?.reply({ t: 'Amount invalid!' });
+      }
+
+      const user = await this.userCacheService.getUserFromCache(userId!);
+      if (!user) {
+        return messageChannel?.reply({ t: 'Not found user!' });
+      }
+
+      const jackPot3k = +user.jackPot3k! + Number(amountStr);
+      user.jackPot3k = jackPot3k;
+      await this.userCacheService.updateUserCache(userId!, user);
+
+      return messageChannel?.reply({
+        t: `Tăng thêm jackpot ${amountStr} thành công!`,
+      });
+    }
+
     if (args[0] === 'jackPotDown') {
       const userId = process.env.UTILITY_BOT_ID;
       const amountStr = args[1];
@@ -106,8 +150,52 @@ export class UpdateCommand extends CommandMessage {
       });
     }
 
+    if (args[0] === 'jackPot1kDown') {
+      const userId = process.env.UTILITY_BOT_ID;
+      const amountStr = args[1];
+      const isNumber = !isNaN(Number(amountStr));
+      if (!isNumber) {
+        return messageChannel?.reply({ t: 'Amount invalid!' });
+      }
+
+      const user = await this.userCacheService.getUserFromCache(userId!);
+      if (!user) {
+        return messageChannel?.reply({ t: 'Not found user!' });
+      }
+
+      const jackPot1k = +user.jackPot1k! - Number(amountStr);
+      user.jackPot1k = jackPot1k;
+      await this.userCacheService.updateUserCache(userId!, user);
+
+      return messageChannel?.reply({
+        t: `Giảm jackpot đi ${amountStr} thành công!`,
+      });
+    }
+
+    if (args[0] === 'jackPot3kDown') {
+      const userId = process.env.UTILITY_BOT_ID;
+      const amountStr = args[1];
+      const isNumber = !isNaN(Number(amountStr));
+      if (!isNumber) {
+        return messageChannel?.reply({ t: 'Amount invalid!' });
+      }
+
+      const user = await this.userCacheService.getUserFromCache(userId!);
+      if (!user) {
+        return messageChannel?.reply({ t: 'Not found user!' });
+      }
+
+      const jackPot3k = +user.jackPot3k! - Number(amountStr);
+      user.jackPot3k = jackPot3k;
+      await this.userCacheService.updateUserCache(userId!, user);
+
+      return messageChannel?.reply({
+        t: `Giảm jackpot đi ${amountStr} thành công!`,
+      });
+    }
+
     return messageChannel?.reply({
-      t: 'Câu lệnh không hợp lệ. Dùng: up, down, jackPotUp, jackPotDown',
+      t: 'Câu lệnh không hợp lệ. Dùng: up, down, jackPotUp, jackPot1kUp, jackPot3kUp, jackPotDown, jackPot1kDown, jackPot3kDown',
     });
   }
 }

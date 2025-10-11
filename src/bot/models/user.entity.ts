@@ -71,6 +71,12 @@ export class User {
   @Column({ type: 'numeric', nullable: true, default: 0 })
   jackPot: number;
 
+  @Column({ type: 'numeric', nullable: true, default: 0 })
+  jackPot1k: number;
+
+  @Column({ type: 'numeric', nullable: true, default: 0 })
+  jackPot3k: number;
+
   @Column({ type: 'jsonb', nullable: true, default: {} })
   roleClan: {
     [clanId: string]: {
