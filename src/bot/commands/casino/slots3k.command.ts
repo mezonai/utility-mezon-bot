@@ -40,7 +40,7 @@ const slotItems = [
   '15.png',
 ];
 
-@Command('slots3k')
+@Command('slots3')
 export class Slots3KCommand extends CommandMessage {
   private queueProcessor: BaseQueueProcessor<ChannelMessage>;
   private notifiedUsers: Map<string, number> = new Map();
