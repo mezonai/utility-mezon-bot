@@ -46,9 +46,10 @@ export class PollService {
     '🔟 ',
   ];
 
-  generateEmbedComponents(options, data?, isMultiple?) {
+  generateEmbedComponents(options, data?, isMultiple?, dataUser?) {
     const embedCompoents = options.map((option, index) => {
       const userVoted = data?.[index];
+      const idVoted = dataUser?.[index]
       return {
         ...(isMultiple ? { name: `poll_${index}` } : {}),
         label: `${this.iconList[index] + option.trim()} ${userVoted?.length ? `(${userVoted.length})` : ''}`,
@@ -57,6 +58,7 @@ export class PollService {
           ? `- Voted: ${userVoted.join(', ')}`
           : `- (no one choose)`,
         style: EButtonMessageStyle.SUCCESS,
+        extraData: idVoted
       };
     });
     return embedCompoents;
@@ -595,14 +597,16 @@ export class PollService {
         if (!findUser) return;
 
         const username = findUser.clan_nick || findUser.username;
+        const id = findUser.user_id
 
         if (!username || !value) return;
 
         let groupedByValue: { [key: string]: string[] } = {};
+        let groupedById: { [key: string]: string[] } = {};
 
         if (!isMultiple) {
           // === SINGLE mode ===
-          const newUserVoteMessage = { username, value };
+          const newUserVoteMessage = { id, username, value };
 
           const exists = userVoteMessageId.some(
             (item) =>
@@ -630,6 +634,13 @@ export class PollService {
             }
             groupedByValue[item.value].push(item.username);
           }
+
+          for (const item of userVoteMessageId) {
+            if (!groupedById[item.value]) {
+              groupedById[item.value] = [];
+            }
+            groupedById[item.value].push(item.id);
+          }
         } else {
           // === MULTIPLE mode ===
 
@@ -645,7 +656,7 @@ export class PollService {
             return user;
           });
           if (!checkExist) {
-            userVoteMessageId.push({ username, values });
+            userVoteMessageId.push({ username, values, id });
           }
 
           // Group username by value (MULTIPLE)
@@ -656,6 +667,14 @@ export class PollService {
               }
               groupedByValue[val].push(user.username);
             }
+          } 
+          for (const user of userVoteMessageId) {
+            for (const val of user.values) {
+              if (!groupedById[val]) {
+                groupedById[val] = [];
+              }
+              groupedById[val].push(user.id);
+            }
           }
         }
 
@@ -664,6 +683,7 @@ export class PollService {
           options,
           groupedByValue,
           isMultiple,
+          groupedById
         );
 
         const create = findMessagePoll.createAt;
