@@ -234,12 +234,6 @@ export class WithdrawTokenCommand extends CommandMessage {
     } catch (error) {
       console.error('Error processing withdrawal:', error);
 
-      try {
-        await this.userCacheService.updateUserBalance(userId, money, 0, 5);
-      } catch (rollbackError) {
-        console.error('Error rolling back withdrawal:', rollbackError);
-      }
-
       const errorMessage =
         'Có lỗi xảy ra khi xử lý rút tiền. Số dư của bạn đã được hoàn lại.';
       await messageChannel?.reply({
