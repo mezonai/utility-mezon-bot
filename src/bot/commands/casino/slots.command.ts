@@ -655,7 +655,7 @@ export class SlotsCommand extends CommandMessage {
             const jackpotText = `nổ jackpot ${isJackPot ? '777 ' : ''}${wonAmount.toLocaleString('vi-VN')}đ`;
             await Promise.all([
               user.sendDM({
-                t: `${message.username} vừa ${jackpotText}`,
+                t: `${message.username} vừa ${jackpotText}. Tiền trong Pot hiện tại: ${Math.floor(Number(newJackPot)).toLocaleString('vi-VN')}đ.\n*update jackPotUp`,
               }),
               userPlay.sendDM({
                 t: `Bạn vừa ${jackpotText}`,
@@ -715,10 +715,10 @@ export class SlotsCommand extends CommandMessage {
           color: getRandomColor(),
           title: '🎰 Kết quả Slots 🎰',
           description: `
-            Jackpot: ${Math.floor(Number(currentJackPot))}
-            Bạn đã cược: ${money}
-            Bạn ${win ? 'thắng' : 'thua'}: ${win ? wonAmount : money}
-            Jackpot mới: ${Math.floor(Number(newJackPot))}
+            Jackpot: ${Math.floor(Number(currentJackPot)).toLocaleString('vi-VN')}đ
+            Bạn đã cược: ${money.toLocaleString('vi-VN')}đ
+            Bạn ${win ? 'thắng' : 'thua'}: ${(win ? wonAmount : money).toLocaleString('vi-VN')}đ
+            Jackpot mới: ${Math.floor(Number(newJackPot)).toLocaleString('vi-VN')}đ
             `,
           fields: [
             {

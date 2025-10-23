@@ -38,16 +38,22 @@ export class ChecktransactionCommand extends CommandMessage {
       .createQueryBuilder('user')
       .select(
         `
-          COALESCE(
-            SUM(CASE WHEN user.amount > 0 THEN user.amount ELSE 0 END),
-          0)
-        `,
+      COALESCE(
+        SUM(CASE WHEN CAST(user.amount AS numeric) > 0 THEN CAST(user.amount AS numeric) ELSE 0 END),
+      0)
+    `,
         'total_amount',
       )
       .getRawOne();
 
+    const dirtyUsers = await this.userRepository
+      .createQueryBuilder('user')
+      .select(['user.user_id AS user_id', 'user.amount AS amount'])
+      .where(`(user.amount)::text !~ '^[-+]?[0-9]+(\\.[0-9]+)?$'`)
+      .getRawMany();
+
     const totalAmount = parseFloat(result?.total_amount ?? '0') || 0;
-    return { result, totalAmount };
+    return { result, totalAmount, dirtyUsers };
   }
 
   async execute(args: string[], message: ChannelMessage) {
@@ -55,7 +61,8 @@ export class ChecktransactionCommand extends CommandMessage {
     if (args[0] === 'admin') {
       if (message.sender_id !== '1827994776956309504') return;
       const messageChannel = await this.getChannelMessage(message);
-      const { result, totalAmount } = await this.getTotalAmountUser();
+      const { result, totalAmount, dirtyUsers } =
+        await this.getTotalAmountUser();
       const findBot = await this.userRepository.findOne({
         where: { user_id: process.env.UTILITY_BOT_ID },
       });
@@ -67,7 +74,7 @@ export class ChecktransactionCommand extends CommandMessage {
       const totalPot =
         +findBot?.jackPot + +findBot?.jackPot1k + +findBot?.jackPot3k;
       await messageChannel?.reply({
-        t: `${JSON.stringify(result)} \nTổng tiền user: ${total.toLocaleString('vi-VN')}, Tiền POT: ${totalPot.toLocaleString('vi-VN')}\nTiền user + pot: ${(total + totalPot).toLocaleString('vi-VN')}\nTiền bot: ${(+findBot?.amount).toLocaleString('vi-VN')}`,
+        t: `${JSON.stringify(result)}\n ${JSON.stringify(dirtyUsers)} \nTổng tiền user: ${total.toLocaleString('vi-VN')}, Tiền POT: ${totalPot.toLocaleString('vi-VN')}\nTiền user + pot: ${(total + totalPot).toLocaleString('vi-VN')}\nTiền bot: ${(+findBot?.amount).toLocaleString('vi-VN')}`,
       });
       return;
     }
