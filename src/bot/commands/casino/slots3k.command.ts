@@ -9,7 +9,7 @@ import { Command } from 'src/bot/base/commandRegister.decorator';
 import { User } from 'src/bot/models/user.entity';
 import { MezonClientService } from 'src/mezon/services/mezon-client.service';
 import { Not, Repository } from 'typeorm';
-import { getRandomColor } from 'src/bot/utils/helps';
+import { getRandomColor, WARN_MESSAGES } from 'src/bot/utils/helps';
 import { EUserError } from 'src/bot/constants/error';
 import { EmbedProps, FuncType } from 'src/bot/constants/configs';
 import {
@@ -106,7 +106,6 @@ export class Slots3KCommand extends CommandMessage {
       );
       return Number(newBotCache?.jackPot3k) || 0;
     }
-    console.log('botCache', botCache);
     return Number(botCache.jackPot3k) || 0;
   }
 
@@ -506,13 +505,36 @@ export class Slots3KCommand extends CommandMessage {
     const messageChannel = await this.getChannelMessage(message);
     const money = 3000;
 
-    const lockKey = `slot_${message.sender_id}`;
-    const lockAcquired = await this.redisCacheService.acquireLock(lockKey, 5);
+    const userKey = `slot_${message.sender_id}`;
+    const { count, ttlLeft } = await this.redisCacheService.incrementCount(
+      userKey,
+      1,
+    );
 
-    if (!lockAcquired) {
+    if (count > 2) {
+      const shouldWarn = await this.redisCacheService.trySendWarnOnce(
+        userKey,
+        ttlLeft > 0 ? ttlLeft : 1,
+      );
+
+      if (shouldWarn) {
+        const warn =
+          WARN_MESSAGES[Math.floor(Math.random() * WARN_MESSAGES.length)];
+        return await this.trackReplyAndSend(messageChannel, {
+          t: warn,
+          mk: [{ type: EMarkdownType.PRE, s: 0, e: warn.length }],
+        });
+      }
+      return;
+    }
+
+    const mutexToken = await this.redisCacheService.acquireMutex(userKey, 10);
+    if (!mutexToken) {
+      const warn =
+        'Hệ thống đang xử lý lượt trước của bạn. Vui lòng thử lại sau một chút.';
       return await this.trackReplyAndSend(messageChannel, {
-        t: 'Bạn đang chơi slots quá nhanh! Vui lòng chờ 5 giây.',
-        mk: [{ type: EMarkdownType.PRE, s: 0, e: 50 }],
+        t: warn,
+        mk: [{ type: EMarkdownType.PRE, s: 0, e: warn.length }],
       });
     }
 
@@ -635,7 +657,7 @@ export class Slots3KCommand extends CommandMessage {
         });
       }
 
-      await this.updateBotJackpot(newJackPot, lockKey);
+      await this.updateBotJackpot(newJackPot, userKey);
 
       if (win) {
         this.jackPotTransaction
@@ -753,7 +775,7 @@ export class Slots3KCommand extends CommandMessage {
         }, 1300);
       });
     } finally {
-      await this.redisCacheService.releaseLock(lockKey);
+      await this.redisCacheService.releaseMutex(userKey, mutexToken);
     }
   }
 

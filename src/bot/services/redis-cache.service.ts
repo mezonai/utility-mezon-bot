@@ -1,4 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
+import { randomUUID } from 'crypto';
 import Redis from 'ioredis';
 
 export interface UserCache {
@@ -27,6 +28,8 @@ export class RedisCacheService {
 
   private readonly USER_PREFIX = 'user:slots:';
   private readonly LOCK_PREFIX = 'lock:slots:';
+  private readonly COUNT_PREFIX = 'count:slots:';
+  private readonly MUTEX_PREFIX = 'mutex:slots:';
 
   private readonly USER_TTL = 86400; // 1 day
   private readonly LOCK_TTL = 10;
@@ -110,6 +113,103 @@ export class RedisCacheService {
       this.logger.error(`Error acquiring lock for ${key}:`, error);
       return false;
     }
+  }
+
+  async incrementCount(
+    key: string,
+    windowSec: number,
+  ): Promise<{ count: number; ttlLeft: number }> {
+    const k = `${this.COUNT_PREFIX}${key}`;
+    const count = await this.redis.incr(k);
+    if (count === 1) {
+      await this.redis.expire(k, Math.max(1, Math.floor(windowSec)));
+    }
+    const ttlLeft = await this.redis.ttl(k);
+    return { count, ttlLeft };
+  }
+
+  async getCurrentCount(
+    key: string,
+  ): Promise<{ count: number; ttlLeft: number }> {
+    const k = `${this.COUNT_PREFIX}${key}`;
+    const results = await this.redis.multi().get(k).ttl(k).exec();
+
+    if (!results) return { count: 0, ttlLeft: -2 };
+
+    const [, valRaw] = results[0];
+    const [, ttlRaw] = results[1];
+
+    const count = valRaw ? parseInt(valRaw as string, 10) : 0;
+    const ttlLeft = (ttlRaw as number) ?? -2;
+
+    return { count, ttlLeft };
+  }
+
+  async acquireMutex(
+    key: string,
+    ttlSec = this.LOCK_TTL,
+  ): Promise<string | null> {
+    try {
+      const mutexKey = `${this.MUTEX_PREFIX}${key}`;
+      const token = randomUUID();
+
+      let result: string | null;
+      if (!Number.isFinite(ttlSec) || ttlSec <= 0) ttlSec = 1;
+
+      if (Number.isInteger(ttlSec)) {
+        result = await this.redis.set(mutexKey, token, 'EX', ttlSec, 'NX');
+      } else {
+        const ttlMs = Math.max(1, Math.round(ttlSec * 1000));
+        result = await this.redis.set(mutexKey, token, 'PX', ttlMs, 'NX');
+      }
+
+      return result === 'OK' ? token : null;
+    } catch (e) {
+      this.logger.error(`acquireMutex error for ${key}:`, e);
+      return null;
+    }
+  }
+
+  async releaseMutex(key: string, token: string): Promise<boolean> {
+    const mutexKey = `${this.MUTEX_PREFIX}${key}`;
+    const lua = `
+      if redis.call('GET', KEYS[1]) == ARGV[1] then
+        return redis.call('DEL', KEYS[1])
+      else
+        return 0
+      end
+    `;
+    try {
+      const res = await this.redis.eval(lua, 1, mutexKey, token);
+      return res === 1;
+    } catch (e) {
+      this.logger.error(`releaseMutex error for ${key}:`, e);
+      return false;
+    }
+  }
+
+  async acquireCooldown(key: string, ttlSec = this.LOCK_TTL): Promise<boolean> {
+    try {
+      const lockKey = `${this.LOCK_PREFIX}${key}`;
+      let result: string | null;
+      if (!Number.isFinite(ttlSec) || ttlSec <= 0) ttlSec = 1;
+      if (Number.isInteger(ttlSec)) {
+        result = await this.redis.set(lockKey, '1', 'EX', ttlSec, 'NX');
+      } else {
+        const ttlMs = Math.max(1, Math.round(ttlSec * 1000));
+        result = await this.redis.set(lockKey, '1', 'PX', ttlMs, 'NX');
+      }
+      return result === 'OK';
+    } catch (e) {
+      this.logger.error(`acquireCooldown error for ${key}:`, e);
+      return false;
+    }
+  }
+
+  async trySendWarnOnce(key: string, ttlSec: number): Promise<boolean> {
+    const warnKey = `warn:slots:${key}`;
+    const r = await this.redis.set(warnKey, '1', 'EX', ttlSec, 'NX');
+    return r === 'OK';
   }
 
   async releaseLock(key: string): Promise<void> {
