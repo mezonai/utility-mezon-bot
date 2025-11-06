@@ -6,12 +6,14 @@ import { CommandMessage } from 'src/bot/base/command.abstract';
 import { User } from 'src/bot/models/user.entity';
 import { MezonClientService } from 'src/mezon/services/mezon-client.service';
 import { FuncType } from 'src/bot/constants/configs';
+import { UserCacheService } from 'src/bot/services/user-cache.service';
 
 @Command('ban')
 export class BanCommand extends CommandMessage {
   constructor(
     clientService: MezonClientService,
     @InjectRepository(User) private userRepository: Repository<User>,
+    private userCacheService: UserCacheService,
   ) {
     super(clientService);
   }
@@ -138,7 +140,12 @@ export class BanCommand extends CommandMessage {
       if (!findUser) {
         continue;
       }
-      const bans = Array.isArray(findUser.ban) ? findUser.ban : [];
+      const user = await this.userCacheService.getUserFromCache(findUser.user_id);
+      if (!user) {
+        continue
+      }
+      
+      const bans = Array.isArray(user.ban) ? user.ban : [];
 
       const idx = bans.findIndex((b) => b.type === funcType);
 
@@ -152,8 +159,9 @@ export class BanCommand extends CommandMessage {
           note: note,
         });
       }
-      findUser.ban = bans;
-      await this.userRepository.save(findUser);
+
+      user.ban = bans;
+      await this.userCacheService.updateUserCache(findUser.user_id, user);
       userban.push(username);
     }
     let contentMsg = '';
