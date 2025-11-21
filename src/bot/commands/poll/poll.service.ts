@@ -24,6 +24,7 @@ import { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
 export class PollService {
   private client: MezonClient;
   private blockEditedList: string[] = [];
+  private POLL_TOTAL_LIMIT = 6500;
   constructor(
     @InjectRepository(MezonBotMessage)
     private mezonBotMessageRepository: Repository<MezonBotMessage>,
@@ -46,22 +47,60 @@ export class PollService {
     '🔟 ',
   ];
 
+  private formatVotedUsers(users: string[] | undefined, maxChars: number) {
+    if (!users || users.length === 0) return '(no one choose)';
+    if (maxChars <= 0) return '...';
+
+    const result: string[] = [];
+    let currentLen = 0;
+
+    for (const name of users) {
+      const piece = (result.length ? ', ' : '') + name;
+      if (currentLen + piece.length > maxChars) break;
+      result.push(name);
+      currentLen += piece.length;
+    }
+
+    const hiddenCount = users.length - result.length;
+    if (hiddenCount > 0) {
+      return `${result.join(', ')} ... (+${hiddenCount} more people)`;
+    }
+
+    return result.join(', ');
+  }
+
   generateEmbedComponents(options, data?, isMultiple?, dataUser?) {
-    const embedCompoents = options.map((option, index) => {
-      const userVoted = data?.[index];
-      const idVoted = dataUser?.[index]
+    const optionCount = Math.min(Math.max(options.length, 2), 10);
+
+    const availableForOptions = Math.max(1000, this.POLL_TOTAL_LIMIT);
+
+    const maxCharsPerOption = Math.floor(availableForOptions / optionCount);
+
+    const embedComponents = options.map((option, index) => {
+      const userVoted = data?.[index] || [];
+      const idVoted = dataUser?.[index];
+
+      const voteCount = userVoted.length;
+      const labelCount = voteCount ? ` (${voteCount})` : '';
+
+      const prefix = userVoted.length ? '- Voted: ' : '- (no one choose)';
+      const maxUserChars = maxCharsPerOption - prefix.length;
+
+      const description = userVoted.length
+        ? `${prefix}${this.formatVotedUsers(userVoted, maxUserChars)}`
+        : prefix;
+
       return {
         ...(isMultiple ? { name: `poll_${index}` } : {}),
-        label: `${this.iconList[index] + option.trim()} ${userVoted?.length ? `(${userVoted.length})` : ''}`,
+        label: `${this.iconList[index]}${option.trim()}${labelCount}`,
         value: `poll_${index}`,
-        description: userVoted?.length
-          ? `- Voted: ${userVoted.join(', ')}`
-          : `- (no one choose)`,
+        description,
         style: EButtonMessageStyle.SUCCESS,
-        extraData: idVoted
+        extraData: idVoted,
       };
     });
-    return embedCompoents;
+
+    return embedComponents;
   }
 
   generateEmbedMessageVote(
@@ -597,7 +636,7 @@ export class PollService {
         if (!findUser) return;
 
         const username = findUser.clan_nick || findUser.username;
-        const id = findUser.user_id
+        const id = findUser.user_id;
 
         if (!username || !value) return;
 
@@ -667,7 +706,7 @@ export class PollService {
               }
               groupedByValue[val].push(user.username);
             }
-          } 
+          }
           for (const user of userVoteMessageId) {
             for (const val of user.values) {
               if (!groupedById[val]) {
@@ -683,7 +722,7 @@ export class PollService {
           options,
           groupedByValue,
           isMultiple,
-          groupedById
+          groupedById,
         );
 
         const create = findMessagePoll.createAt;
