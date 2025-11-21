@@ -139,19 +139,36 @@ export class PollService {
   }
 
   generateEmbedComponentsResult(options, data, authorName: string) {
-    const embedCompoents = options.map((option, index) => {
-      const userVoted = data?.[index];
+    const availableForOptions = Math.max(1000, this.POLL_TOTAL_LIMIT);
+
+    const optionCount = Math.min(Math.max(options.length, 2), 10);
+    const maxCharsPerOption = Math.floor(availableForOptions / optionCount);
+
+    const embedComponents = options.map((option, index) => {
+      const userVoted: string[] = data?.[index] || [];
+      const voteCount = userVoted.length;
+
+      const prefix = voteCount ? '- Voted: ' : '- (no one choose)';
+      const maxUserChars = Math.max(0, maxCharsPerOption - prefix.length);
+
+      const value = voteCount
+        ? `${prefix}${this.formatVotedUsers(userVoted, maxUserChars)}`
+        : prefix;
+
       return {
-        name: `${this.iconList[index] + option.trim()} (${userVoted?.length || 0})`,
-        value: `${userVoted ? `- Voted: ${userVoted.join(', ')}` : `- (no one choose)`}`,
+        name: `${this.iconList?.[index] ?? ''}${option.trim()} (${voteCount})`,
+        value,
       };
     });
-    authorName &&
-      embedCompoents.push({
-        name: `\nPoll created by ${authorName}\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t`,
+
+    if (authorName) {
+      embedComponents.push({
+        name: `\nPoll created by ${authorName}`,
         value: '',
       });
-    return embedCompoents;
+    }
+
+    return embedComponents;
   }
 
   generateEmbedMessageResult(title: string, color: string, embedCompoents) {
