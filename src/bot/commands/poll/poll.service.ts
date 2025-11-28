@@ -800,6 +800,8 @@ export class PollService {
         await sleep(700);
         await this.handleResultPoll(findMessagePoll);
       }
-    } catch (error) {}
+    } catch (error) {
+      console.log('handleSelectPoll', error)
+    }
   }
 }
