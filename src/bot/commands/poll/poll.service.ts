@@ -24,7 +24,7 @@ import { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
 export class PollService {
   private client: MezonClient;
   private blockEditedList: string[] = [];
-  private POLL_TOTAL_LIMIT = 6500;
+  private POLL_TOTAL_LIMIT = 3500;
   constructor(
     @InjectRepository(MezonBotMessage)
     private mezonBotMessageRepository: Repository<MezonBotMessage>,
