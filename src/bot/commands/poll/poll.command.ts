@@ -5,12 +5,14 @@ import { CommandMessage } from 'src/bot/base/command.abstract';
 import { getRandomColor } from 'src/bot/utils/helps';
 import { MezonClientService } from 'src/mezon/services/mezon-client.service';
 import { PollService } from './poll.service';
+import { PollTrackerService } from 'src/bot/services/pollTracker.service';
 
 @Command('poll')
 export class PollCommand extends CommandMessage {
   constructor(
     clientService: MezonClientService,
     private pollService: PollService,
+    private pollTrackerService: PollTrackerService,
   ) {
     super(clientService);
   }
@@ -25,7 +27,7 @@ export class PollCommand extends CommandMessage {
     const embed: EmbedProps[] = [
       {
         color,
-        title: `POLL CREATOR`,
+        title: `Poll Configuration`,
         fields: this.pollService.generateFieldsCreatePoll(defaultNumberOption),
         timestamp: new Date().toISOString(),
         footer: MEZON_EMBED_FOOTER,
@@ -38,6 +40,11 @@ export class PollCommand extends CommandMessage {
       message.clan_id ?? '',
       message.sender_id,
     );
-    await messageChannel?.reply({ embed, components });
+    const sent = await messageChannel?.reply({ embed, components });
+    this.pollTrackerService.startTrackPoll(
+      message.clan_id!,
+      message.channel_id,
+      sent?.message_id!,
+    );
   }
 }

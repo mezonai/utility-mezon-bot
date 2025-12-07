@@ -62,6 +62,7 @@ import { UserCacheService } from './services/user-cache.service';
 import { ReplyStatsService } from './services/reply-stats.service';
 import { Slots1KCommand } from './commands/casino/slots1k.command';
 import { Slots3KCommand } from './commands/casino/slots3k.command';
+import { PollTrackerService } from './services/pollTracker.service';
 
 @Module({
   imports: [
@@ -130,7 +131,8 @@ import { Slots3KCommand } from './commands/casino/slots3k.command';
     ChecktransactionCommand,
     UpdateCommand,
     Slots1KCommand,
-    Slots3KCommand
+    Slots3KCommand,
+    PollTrackerService
   ],
   controllers: [],
 })

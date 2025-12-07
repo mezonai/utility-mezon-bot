@@ -17,6 +17,7 @@ import {
 } from 'src/bot/constants/configs';
 import { MezonBotMessage } from 'src/bot/models/mezonBotMessage.entity';
 import { MezonClientService } from 'src/mezon/services/mezon-client.service';
+import { PollTrackerService } from 'src/bot/services/pollTracker.service';
 import { getRandomColor, sleep } from 'src/bot/utils/helps';
 import { MessageButtonClicked } from 'mezon-sdk/dist/cjs/rtapi/realtime';
 
@@ -30,6 +31,7 @@ export class PollService {
     private mezonBotMessageRepository: Repository<MezonBotMessage>,
     @InjectRepository(User) private userRepository: Repository<User>,
     private clientService: MezonClientService,
+    private pollTrackerService: PollTrackerService,
   ) {
     this.client = this.clientService.getClient();
   }
@@ -467,7 +469,7 @@ export class PollService {
       const embed: EmbedProps[] = [
         {
           color,
-          title: `POLL CREATION`,
+          title: `Poll Configuration`,
           fields: this.generateFieldsCreatePoll(
             totalOptions,
             optionValues,
@@ -552,6 +554,7 @@ export class PollService {
         is_public: !channel.is_private,
         color,
         clan_nick: authorName,
+        clan_id: clanId,
       };
       const components = this.generateButtonComponentsVote({
         ...dataVote,
@@ -784,8 +787,32 @@ export class PollService {
           { pollResult: userVoteMessageId },
         );
 
+        const state = this.pollTrackerService.getPollState(
+          findMessagePoll.messageId,
+        );
+
+        const isExpired = state?.expired;
+
         // update message
-        await messsage.update({ embed, components });
+        const channel = await this.client.channels.fetch(
+          findMessagePoll.channelId,
+        );
+        if (!isExpired && typeof isExpired !== 'undefined') {
+          await messsage.update({ embed, components });
+        } else {
+          await messsage.delete();
+          this.pollTrackerService.stopTrackPoll(findMessagePoll.messageId);
+          const newpollMessage = await channel.send({ embed, components });
+          this.pollTrackerService.startTrackPoll(
+            clanId,
+            findMessagePoll.channelId,
+            newpollMessage.message_id,
+          );
+          await this.mezonBotMessageRepository.update(
+            { id: findMessagePoll.id },
+            { messageId: newpollMessage.message_id },
+          );
+        }
       }
 
       if (typeButtonRes === EmbebButtonType.FINISH) {
@@ -801,7 +828,7 @@ export class PollService {
         await this.handleResultPoll(findMessagePoll);
       }
     } catch (error) {
-      console.log('handleSelectPoll', error)
+      console.log('handleSelectPoll', error);
     }
   }
 }
