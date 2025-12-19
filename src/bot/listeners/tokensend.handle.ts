@@ -128,8 +128,7 @@ export class ListenerTokenSend extends BaseQueueProcessor<TokenSentEvent> {
         });
       });
 
-      const clan = this.client.clans.get('0');
-      const user = await clan?.users.fetch(tokenEvent.sender_id as string);
+      const user = await this.client.users.fetch(tokenEvent.sender_id as string);
       const successMessage = `💸Nạp ${tokenEvent.amount.toLocaleString('vi-VN')} mezon đồng thành công!`;
       await user?.sendDM({
         t: successMessage,

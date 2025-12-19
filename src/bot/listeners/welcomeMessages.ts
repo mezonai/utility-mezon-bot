@@ -27,7 +27,7 @@ export class WelcomeMessageHandler {
     if (!welcomeMessage || !clan) {
       return;
     }
-    const user = await clan.users.fetch(addClanUser.user?.user_id || '');
+    const user = await this.client.users.fetch(addClanUser.user?.user_id || '');
     const clanname = clan.name.toUpperCase();
     const username = user.username;
     const describe = welcomeMessage.content

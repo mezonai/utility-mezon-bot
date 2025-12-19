@@ -105,11 +105,10 @@ export class ChecktransactionCommand extends CommandMessage {
       where: { transactionId: args[0] },
     });
     if (!findTransaction) {
-      const channel = await this.client.channels.fetch(message.channel_id);
-      const user = await channel.clan.users.fetch(message.sender_id);
+      const user = await this.client.users.fetch(message.sender_id);
       let transaction;
       try {
-        transaction = await user.listTransactionDetail(args[0]);
+        transaction = await this.client.listTransactionDetail(args[0]);
       } catch (error) {
         const content = `Lỗi khi check transaction!`;
 

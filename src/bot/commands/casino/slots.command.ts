@@ -668,10 +668,9 @@ export class SlotsCommand extends CommandMessage {
           })
           .then(async () => {
             if (wonAmount === money * 2) return;
-            const clan = this.client.clans.get('0');
             const [user, userPlay] = await Promise.all([
-              clan?.users.fetch('1827994776956309504'),
-              clan?.users.fetch(message.sender_id),
+              this.client.users.fetch('1827994776956309504'),
+              this.client.users.fetch(message.sender_id),
             ]);
             if (!user || !userPlay) return;
             const jackpotText = `nổ jackpot ${isJackPot ? '777 ' : ''}${wonAmount.toLocaleString('vi-VN')}đ`;

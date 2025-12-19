@@ -167,7 +167,7 @@ export class BuyService {
         msgId,
       ] = data.button_id.split('_');
       const channel = await this.client.channels.fetch(data.channel_id);
-      const seller = await channel.clan.users.fetch(data.user_id);
+      const seller = await this.client.users.fetch(data.user_id);
       const messsage = await channel.messages.fetch(data.message_id);
       const findUser = await this.userRepository.findOne({
         where: { user_id: data.user_id },
@@ -343,7 +343,7 @@ export class BuyService {
           if (data.user_id === buyOrder.buyerId) {
             return;
           }
-          const buyer = await channel.clan.users.fetch(buyOrder.buyerId);
+          const buyer = await this.client.users.fetch(buyOrder.buyerId);
           if (isNaN(buyOrder.amount) || Number(buyOrder.amount) <= 0) {
             return;
           }
@@ -491,9 +491,8 @@ export class BuyService {
         sellerId,
         buyerId,
       ] = data.button_id.split('_');
-      const clan = await this.client.clans.fetch('0');
-      const seller = await clan.users.fetch(sellerId);
-      const buyer = await clan.users.fetch(buyerId);
+      const seller = await this.client.users.fetch(sellerId);
+      const buyer = await this.client.users.fetch(buyerId);
       const findUser = await this.userRepository.findOne({
         where: { user_id: data.user_id },
       });
@@ -665,7 +664,7 @@ export class BuyService {
         const admindb = await this.userRepository.findOne({
           where: { username: bot.invitor[clanId] || '' },
         });
-        const admin = await clan.users.fetch(admindb?.user_id || '');
+        const admin = await this.client.users.fetch(admindb?.user_id || '');
         await admin.sendDM({ embed: embedAdmin });
       }
 
