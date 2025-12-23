@@ -7,7 +7,7 @@ import { MezonClientService } from 'src/mezon/services/mezon-client.service';
 import { PollService } from './poll.service';
 import { PollTrackerService } from 'src/bot/services/pollTracker.service';
 
-@Command('poll')
+// @Command('poll')
 export class PollCommand extends CommandMessage {
   constructor(
     clientService: MezonClientService,
