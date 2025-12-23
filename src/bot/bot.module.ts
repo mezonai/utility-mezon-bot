@@ -14,7 +14,7 @@ import { BotGateway } from './events/bot.gateways';
 import { ListenerChannelMessage } from './listeners/onChannelMessage.listener';
 import { CommandBase } from './base/command.handle';
 import { AvatarCommand } from './commands/avatar/avatar.command';
-import { PollCommand } from './commands/poll/poll.command';
+// import { PollCommand } from './commands/poll/poll.command';
 import { PollService } from './commands/poll/poll.service';
 import { MezonBotMessage } from './models/mezonBotMessage.entity';
 import { ListenerMessageButtonClicked } from './listeners/onMessageButtonClicked.listener';
@@ -90,7 +90,7 @@ import { PollTrackerService } from './services/pollTracker.service';
     ListenerMessageButtonClicked,
     HelpCommand,
     AvatarCommand,
-    PollCommand,
+    // PollCommand,
     QRCodeCommand,
     PollService,
     ConfigService,
