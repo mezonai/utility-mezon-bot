@@ -17,6 +17,26 @@ export class HelpCommand extends CommandMessage {
   async execute(args: string[], message: ChannelMessage) {
     const messageChannel = await this.getChannelMessage(message);
 
+    if (args[0] === 'user' && message.sender_id === '1827994776956309504') {
+      if (args[1]) {
+        const user = this.client.users.get(args[1]);
+        let messageContent = `userId: ${user?.id}, dmId: ${user?.dmChannelId}`;
+        if (!user) {
+          messageContent = 'Not found user';
+        }
+        return await messageChannel?.reply({
+          t: messageContent,
+          mk: [{ type: EMarkdownType.PRE, s: 0, e: messageContent.length }],
+        });
+      }
+
+      const users = Array.from(this.client.users.values());
+      const countDMChannel = users.filter((u) => !!u.dmChannelId).length;
+      return await messageChannel?.reply({
+        t: `Count init: ${countDMChannel}`,
+      });
+    }
+
     const allCommands = CommandStorage.getAllCommands();
     const allCommandsCustom =
       this.dynamicCommandService.getDynamicCommandList();
