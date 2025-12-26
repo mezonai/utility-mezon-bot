@@ -1,5 +1,5 @@
 import { OnEvent } from '@nestjs/event-emitter';
-import { EMarkdownType, Events, MezonClient, TokenSentEvent } from 'mezon-sdk';
+import { EMarkdownType, Events, TokenSentEvent } from 'mezon-sdk';
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { User } from 'src/bot/models/user.entity';
@@ -12,8 +12,6 @@ import { BaseQueueProcessor } from 'src/bot/base/queue-processor.base';
 
 @Injectable()
 export class ListenerTokenSend extends BaseQueueProcessor<TokenSentEvent> {
-  private client: MezonClient;
-
   constructor(
     @InjectRepository(User)
     private userRepository: Repository<User>,
@@ -25,7 +23,6 @@ export class ListenerTokenSend extends BaseQueueProcessor<TokenSentEvent> {
     private redisCacheService: RedisCacheService,
   ) {
     super('ListenerTokenSend', 1, 15000);
-    this.client = this.clientService.getClient();
   }
 
   @OnEvent(Events.TokenSend)
@@ -127,8 +124,8 @@ export class ListenerTokenSend extends BaseQueueProcessor<TokenSentEvent> {
           createAt: Date.now(),
         });
       });
-
-      const user = await this.client.users.fetch(tokenEvent.sender_id as string);
+      const client = this.clientService.getClient();
+      const user = await client.users.fetch(tokenEvent.sender_id as string);
       const successMessage = `💸Nạp ${tokenEvent.amount.toLocaleString('vi-VN')} mezon đồng thành công!`;
       await user?.sendDM({
         t: successMessage,
