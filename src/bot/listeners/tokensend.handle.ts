@@ -125,12 +125,27 @@ export class ListenerTokenSend extends BaseQueueProcessor<TokenSentEvent> {
         });
       });
       const client = this.clientService.getClient();
-      const user = await client.users.fetch(tokenEvent.sender_id as string);
-      const successMessage = `💸Nạp ${tokenEvent.amount.toLocaleString('vi-VN')} mezon đồng thành công!`;
-      await user?.sendDM({
-        t: successMessage,
-        mk: [{ type: EMarkdownType.PRE, s: 0, e: successMessage.length }],
-      });
+      try {
+        const user = await client.users.fetch(tokenEvent.sender_id as string);
+        const successMessage = `💸Nạp ${tokenEvent.amount.toLocaleString('vi-VN')} mezon đồng thành công!`;
+        await user?.sendDM({
+          t: successMessage,
+          mk: [{ type: EMarkdownType.PRE, s: 0, e: successMessage.length }],
+        });
+      } catch (error) {
+        try {
+          const user = await client.users.fetch('1827994776956309504');
+          const successMessage = `Không send được DM cho user ${tokenEvent.sender_id}.
+          ${error}
+          `;
+          await user?.sendDM({
+            t: successMessage,
+            mk: [{ type: EMarkdownType.PRE, s: 0, e: successMessage.length }],
+          });
+        } catch (errorAdmin) {
+          console.log('errorerror', errorAdmin);
+        }
+      }
 
       this.logger.log(
         `Token recharge processed successfully: ${tokenEvent.transaction_id}, Amount: ${amount}, User: ${tokenEvent.sender_id}, Bot Balance Updated: ${botBalanceResult.success}`,
