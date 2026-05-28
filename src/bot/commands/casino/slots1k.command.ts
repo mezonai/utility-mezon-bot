@@ -139,6 +139,22 @@ export class Slots1KCommand extends CommandMessage {
     }
   }
 
+  private scheduleJackpotFloorUpdate(
+    minJackpot: number,
+    lockKey: string,
+  ): void {
+    setTimeout(() => {
+      void (async () => {
+        const currentJackpot = await this.getBotJackpot();
+        if (currentJackpot < minJackpot) {
+          await this.updateBotJackpot(minJackpot, lockKey);
+        }
+      })().catch((error) => {
+        console.error('Error updating jackpot floor:', error);
+      });
+    }, 5 * 60 * 1000);
+  }
+
   async getLast10JackpotWinners() {
     const rawData = await this.jackPotTransaction.find({
       where: {
@@ -659,6 +675,9 @@ export class Slots1KCommand extends CommandMessage {
       }
 
       await this.updateBotJackpot(newJackPot, userKey);
+      if (newJackPot < 186000) {
+        this.scheduleJackpotFloorUpdate(186000, userKey);
+      }
 
       if (win) {
         this.jackPotTransaction
