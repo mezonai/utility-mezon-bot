@@ -107,7 +107,10 @@ export class RedisCacheService {
   ): Promise<boolean> {
     try {
       const lockKey = `${this.LOCK_PREFIX}${key}`;
-      const result = await this.redis.set(lockKey, '1', 'EX', ttl, 'NX');
+      const result =
+        ttl > 0
+          ? await this.redis.set(lockKey, '1', 'EX', ttl, 'NX')
+          : await this.redis.set(lockKey, '1', 'NX');
       return result === 'OK';
     } catch (error) {
       this.logger.error(`Error acquiring lock for ${key}:`, error);

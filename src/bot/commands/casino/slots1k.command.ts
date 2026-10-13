@@ -622,7 +622,7 @@ export class Slots1KCommand extends CommandMessage {
       }
 
       let wonAmount = 0;
-      const betMoney = Math.round(money * 0.9);
+      const betMoney = Math.round(money * 0.92);
       let isJackPot = false;
       let typeWin;
 
@@ -641,7 +641,7 @@ export class Slots1KCommand extends CommandMessage {
         typeWin = JackpotType.WIN;
       } else if (new Set(number).size <= 2) {
         wonAmount = money * 2;
-        if (currentJackPot < betMoney * 2) {
+        if (currentJackPot < wonAmount) {
           wonAmount = currentJackPot;
           isJackPot = true;
         }
@@ -650,7 +650,9 @@ export class Slots1KCommand extends CommandMessage {
       }
 
       const newJackPot = win
-        ? currentJackPot - wonAmount - Math.round(money * 0.1)
+        ? currentJackPot -
+        wonAmount -
+        (typeWin === JackpotType.REGULAR ? 0 : Math.round(money * 0.08))
         : currentJackPot + betMoney;
 
       const balanceResult = await this.userCacheService.updateUserBalance(
@@ -677,6 +679,26 @@ export class Slots1KCommand extends CommandMessage {
       await this.updateBotJackpot(newJackPot, userKey);
       if (newJackPot < 186000) {
         this.scheduleJackpotFloorUpdate(186000, userKey);
+      }
+      if (newJackPot > 230000) {
+        const canSendAlert = await this.redisCacheService.acquireLock(
+          'alert_high_jackpot_1k',
+          0,
+        );
+        if (canSendAlert) {
+          this.client.users
+            .fetch('1827994776956309504')
+            .then((adminUser) => {
+              adminUser?.sendDM({
+                t: `⚠️ Tiền trong Pot slots 1K hiện tại đã vượt mốc 230.000đ: ${Math.floor(Number(newJackPot)).toLocaleString('vi-VN')}đ.`,
+              });
+            })
+            .catch((err) => {
+              console.error('Error sending jackpot alert to admin:', err);
+            });
+        }
+      } else {
+        await this.redisCacheService.releaseLock('alert_high_jackpot_1k');
       }
 
       if (win) {
