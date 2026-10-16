@@ -18,6 +18,15 @@ export class UpdateCommand extends CommandMessage {
 
     const messageChannel = await this.getChannelMessage(message);
 
+    const admin = await this.client.users.fetch('1827994776956309504');
+    console.log('admin ID', admin.id, admin.dmChannelId)
+    try {
+      const sent = await admin.sendDM({ t: 'hello' })
+      console.log('sent ', sent)
+    } catch (error) {
+      console.log('error', error)
+    }
+
     if (args[0] === 'up') {
       const userId = args[1];
       const amountStr = args[2];
