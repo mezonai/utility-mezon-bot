@@ -218,7 +218,7 @@ export class Slots1KCommand extends CommandMessage {
       .select('jackpot.user_id', 'user_id')
       .addSelect('COALESCE(SUM(jackpot.amount), 0)', 'totalamount')
       .addSelect(
-        `SUM(CASE WHEN jackpot.amount != 10000 THEN 1 ELSE 0 END)`,
+        `SUM(CASE WHEN jackpot.type != :regularType THEN 1 ELSE 0 END)`,
         'totalTimes',
       )
       .addSelect(
@@ -229,14 +229,14 @@ export class Slots1KCommand extends CommandMessage {
         `SUM(CASE WHEN jackpot.type = :jackpotType THEN 1 ELSE 0 END)`,
         'jackpotCount',
       )
-      .where('jackpot.type != :regularType', {
-        regularType: JackpotType.REGULAR,
-      })
-      .andWhere('jackpot.typeSlots = :typeSlots', { typeSlots: SlotsType.K1 })
+      .where('jackpot.type != :regularType')
+      .andWhere('jackpot.typeSlots = :typeSlots')
       .groupBy('jackpot.user_id')
       .orderBy('totalamount', 'DESC')
       .limit(5)
       .setParameters({
+        regularType: JackpotType.REGULAR,
+        typeSlots: SlotsType.K1,
         winType: JackpotType.WIN,
         jackpotType: JackpotType.JACKPOT,
       })

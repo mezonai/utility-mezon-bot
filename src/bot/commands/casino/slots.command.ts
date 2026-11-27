@@ -199,7 +199,6 @@ export class SlotsCommand extends CommandMessage {
       )
       .where(
         `jackpot.user_id = :userId 
-        AND jackpot.type = :regularType 
         AND jackpot.typeSlots IS NULL`,
       )
       .setParameters({
@@ -217,7 +216,7 @@ export class SlotsCommand extends CommandMessage {
       .select('jackpot.user_id', 'user_id')
       .addSelect('COALESCE(SUM(jackpot.amount), 0)', 'totalamount')
       .addSelect(
-        `SUM(CASE WHEN jackpot.amount != 10000 THEN 1 ELSE 0 END)`,
+        `SUM(CASE WHEN jackpot.type != :regularType THEN 1 ELSE 0 END)`,
         'totalTimes',
       )
       .addSelect(
